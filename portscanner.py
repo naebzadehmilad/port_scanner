@@ -1,14 +1,20 @@
 import configparser
 import ipaddress
 import os.path
+from colorama import init, Fore
 
 from pyfiglet import Figlet
 from scapy.all import *
 
-logo = Figlet(font='bubble')
-print(logo.renderText("Remoterz.net"))
-conf = configparser.ConfigParser()
+from colorama import  Fore
+red=Fore.RED
+green=Fore.GREEN
+yel=Fore.YELLOW
+reset=Fore.RESET
 
+logo = Figlet(font='graffiti')
+print(green+logo.renderText('\n%R##########Remoterz.net#########%R'+reset))
+conf = configparser.ConfigParser()
 
 def config():
     global all_ip
@@ -25,7 +31,7 @@ def config():
         with open('config.cfg', 'w') as configfile:
             conf.write(configfile)
         configfile.close()
-        print('config was created please edit configuration and try again !')
+        print('config was created')
         exit(1)
     ##read config to list
     conf.read('config.cfg')
@@ -54,19 +60,25 @@ def checkhost():
     for i in range(countip):
         ping = IP(dst=str(all_ip[i])) / ICMP()
         res = sr1(ping, timeout=1, verbose=0)
-        if res == None:
-            print(all_ip[i], 'is down')
+        if res is None:
+            print(f"{red}+{all_ip[i]} -----> Host is down'{reset}")
         else:
-            print(all_ip[i], '>>>>>>>>>>is up')
+            print(f"{green}+{all_ip[i]} -----> Host is up{reset}")
             for j in range(countport):
-                tcp_request = IP(dst=all_ip[i]) / TCP(dport=ports[j], flags="S")
-                tcp_response = sr1(tcp_request, timeout=1, verbose=0)
-                try:
-                    if tcp_response.getlayer(TCP).flags == "SA":
-                        new=(port, "***is listening")
-                    print(new)
-                except AttributeError:
-                    print(ports[j], "---is not listening")
+                ip = str(all_ip[i])
+                tcp = sr1(IP(dst=ip) / TCP(dport=ports[j], flags="S"), timeout=1, verbose=0 )
+
+                if tcp is not  None :
+                    flag = tcp.getlayer(TCP).flags
+                    if flag ==  "SA":
+                        sr1(IP(dst=ip) / TCP(dport=ports[j], flags='R'), timeout=1, verbose=0, )
+                        print(f"   {green} {ip}:{ports[j]} is listening.  {reset}")
+
+                    if  flag == "RA":
+                        print(f"{red}    {ip}:{ports[j]} is close.  {reset}")
+                if tcp is None:
+                        print(f"{yel}    {ip}:{ports[j]} is {red}filtered {yel}(silently dropped).{reset}")
+
 
 config()
 checkhost()
