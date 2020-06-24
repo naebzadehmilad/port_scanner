@@ -1,8 +1,9 @@
+import time
+startTime = time.time()
 import configparser
 import ipaddress
 import os.path
-from colorama import init, Fore
-
+import random
 from pyfiglet import Figlet
 from scapy.all import *
 
@@ -10,7 +11,7 @@ from colorama import  Fore
 red=Fore.RED
 green=Fore.GREEN
 yel=Fore.YELLOW
-reset=Fore.RESET
+reset=Fore.RESET ; print(reset)
 
 logo = Figlet(font='graffiti')
 print(green+logo.renderText('\n%R##########Remoterz.net#########%R'+reset))
@@ -21,6 +22,8 @@ def config():
     global ports
     global countip
     global countport
+    global  startTime
+    startTime = time.time()
     if os.path.exists('config.cfg'):
         print('##config.cfg is exist##')
     else:
@@ -31,7 +34,7 @@ def config():
         with open('config.cfg', 'w') as configfile:
             conf.write(configfile)
         configfile.close()
-        print('config was created')
+        print('config was created'+reset)
         exit(1)
     ##read config to list
     conf.read('config.cfg')
@@ -65,20 +68,21 @@ def checkhost():
         else:
             print(f"{green}+{all_ip[i]} -----> Host is up{reset}")
             for j in range(countport):
+                srcport=random.randint(1025, 60000)
                 ip = str(all_ip[i])
-                tcp = sr1(IP(dst=ip) / TCP(dport=ports[j], flags="S"), timeout=1, verbose=0 )
+                tcp = sr1(IP(dst=ip) / TCP(sport=srcport,dport=ports[j], flags="S"), timeout=1, verbose=0 )
 
                 if tcp is not  None :
                     flag = tcp.getlayer(TCP).flags
-                    if flag ==  "SA":
-                        sr1(IP(dst=ip) / TCP(dport=ports[j], flags='R'), timeout=1, verbose=0, )
+                    if flag ==  "SA": #or 0x12
+                        sr1(IP(dst=ip) / TCP(sport=srcport,dport=ports[j], flags='R'), timeout=1, verbose=0, )
                         print(f"   {green} {ip}:{ports[j]} is listening.  {reset}")
 
-                    if  flag == "RA":
+                    if  flag == "RA": #or 0x14
                         print(f"{red}    {ip}:{ports[j]} is close.  {reset}")
                 if tcp is None:
                         print(f"{yel}    {ip}:{ports[j]} is {red}filtered {yel}(silently dropped).{reset}")
 
-
+    print(f'The script took {(time.time() - startTime)} second !')
 config()
 checkhost()
