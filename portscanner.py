@@ -1,13 +1,14 @@
+import configparser
 import time
 startTime = time.time()
-import configparser
 import ipaddress
 import os.path
 import random
 from pyfiglet import Figlet
+from colorama import  Fore
 from scapy.all import *
 
-from colorama import  Fore
+
 red=Fore.RED
 green=Fore.GREEN
 yel=Fore.YELLOW
